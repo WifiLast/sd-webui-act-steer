@@ -1,0 +1,4 @@
+/* hidden but present in the DOM, so javascript/act_steer.js can write into it */
+.act-steer-hidden {
+    display: none !important;
+}
