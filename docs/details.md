@@ -400,7 +400,7 @@ its colour, and it becomes the selected word.
   At most 8 changes per press / round, written into the negative prompt box.
   Textual inversion embeddings, `<...>` tags and locked words are never touched.
   Auto mode records the negative prompt per round and restores the best round's.
-* **Evaluation** (SD MCP, `~/mcp/sd_mcp` tool `evaluate_image`, service on
+* **Evaluation** (off unless `SD_ACT_STEER_MCP=1`; SD MCP, `~/mcp/sd_mcp` tool `evaluate_image`, service on
   :2018/sd, runs on the NVIDIA card): **📊 Evaluate** shows quality score (0-1:
   Aesthetic V2.5, LAION aesthetic, MUSIQ, NIMA, prompt adherence minus defect
   tags), prompt adherence (WD14 tagger), prompt tags not found in the image,
@@ -517,7 +517,7 @@ torch. Each image's maps are views into one stacked buffer, so adding a layer
 and the per-step fade are one op each. Rows are taken as slices: indexing GPU
 tensors with Python lists copies the indices from host memory, which on ROCm
 waits for the GPU queue (one stall per layer and step). SD 1.5 512x1024 on the
-RX 7900 XTX with word maps on: 7.5 -> 9.3 it/s (10.0 with them off).
+test GPU with word maps on: 7.5 -> 9.3 it/s (10.0 with them off).
 
 **Separation LoRA (Forge: SD 1.x / SDXL / Anima).** The accordion "Separation LoRA
 (train)" (or `POST /actsteer/train_separation`) generates N images, keeps the

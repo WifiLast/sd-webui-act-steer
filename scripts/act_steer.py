@@ -305,6 +305,9 @@ RATING_SCORE = {1: 8.0, -1: 3.0}  # 👍 / 👎 as SD MCP ratings (0-10)
 
 def send_rating(image, infotext, value, tab):
     """Your rating to the SD MCP too (rate_image: feeds token_quality_report / token_impact); in a thread."""
+    if not evaluate.ENABLED:
+        return
+
     def run():
         try:
             path = evaluate.save_for_eval(image, infotext, f"{tab}_rated")
@@ -597,7 +600,8 @@ class ActSteerScript(scripts.Script):
                                       value=True, scale=1, elem_id=self.elem_id("qual_on"))
                 record_hist = gr.Checkbox(label="Add every generation to the SD MCP history (sharpness, noise, "
                                                 "detail and tags per image, for the quality history)",
-                                          value=True, scale=1, elem_id=self.elem_id("record_hist"))
+                                          value=evaluate.ENABLED, interactive=evaluate.ENABLED, scale=1,
+                                          elem_id=self.elem_id("record_hist"))
             with gr.Row():
                 learn_on = gr.Checkbox(label="Learn from each optimisation (what changed, did the next image get "
                                              "better: conflicts, blurry / noisy areas, SD MCP quality; saved)",
@@ -808,7 +812,8 @@ class ActSteerScript(scripts.Script):
                 return (ev[1].get("percentiles") or {}).get("blur_value")
 
             def history_view(used):
-                hist = quality.history_cached(model_name(), evaluate.call_tool)  # never waits for the MCP
+                hist = quality.history_cached(model_name(), evaluate.call_tool) \
+                    if evaluate.ENABLED else None  # never waits for the MCP
                 if not hist or not used:
                     return ""
                 return quality.history_html(hist, promptedit.prompt_phrases(used), eval_sharpness())
@@ -1036,7 +1041,7 @@ class ActSteerScript(scripts.Script):
                         current.update(promptedit.prompt_weights(prompt or "", phrases))
                     i = min(wordmap_shown.get(tab, 0), len(core.last_wordmaps[tab]["items"]) - 1)
                     local = {w: q for w, q in word_quality(i).items() if w in allowed}
-                    hist = quality.history(model_name(), evaluate.call_tool)
+                    hist = quality.history(model_name(), evaluate.call_tool) if evaluate.ENABLED else {}
                     qplan = quality.plan(local, hist, phrases, current, split_words(lock_text) + R.kept(),
                                          skip=[w for w, _, _ in plan], sharpness_pct=eval_sharpness())
                     qplan = [(w, round(R.limit(w, f), 2), why) for w, f, why in qplan]
@@ -1951,7 +1956,8 @@ class ActSteerScript(scripts.Script):
         state.reset()
         self._paused = None
         # normal generations go into the SD MCP history (API jobs: the SD MCP records its own)
-        self._record_hist = bool(record_hist) and state.fix is None and not getattr(p, "is_api", False)
+        self._record_hist = bool(record_hist) and evaluate.ENABLED and state.fix is None \
+            and not getattr(p, "is_api", False)
         saved_images.clear()
         state.last_applied = None
         self._job = None

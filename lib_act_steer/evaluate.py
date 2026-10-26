@@ -6,6 +6,9 @@ NIMA), checks prompt adherence with the WD14 tagger (prompt tags found / missed,
 PNG's generation info), finds defect tags and combines them into quality_score (0-1). It runs on
 the NVIDIA card in its own service, so it does not take VRAM from the webui. The call goes over
 MCP's streamable HTTP transport (JSON-RPC, answers as server-sent events).
+
+Off unless SD_ACT_STEER_MCP=1: then no request is sent and evaluation, rephrasing, ratings and the
+history are skipped.
 """
 
 import json
@@ -15,6 +18,8 @@ import time
 import requests
 from PIL import PngImagePlugin
 
+ENABLED = os.environ.get("SD_ACT_STEER_MCP", "").strip().lower() in ("1", "true", "yes", "on")
+DISABLED = "MCP services are off (set SD_ACT_STEER_MCP=1 to use them)"
 EVAL_URL = os.environ.get("SD_ACT_STEER_EVAL_URL", "http://127.0.0.1:2018/sd")
 REPHRASE_URL = os.environ.get("SD_ACT_STEER_REPHRASE_URL", "http://127.0.0.1:5007/rhyme")
 EVAL_DIR = os.environ.get("SD_ACT_STEER_EVAL_DIR", os.path.join("outputs", "act-steer-eval"))
@@ -39,7 +44,9 @@ def _message(resp, want_id):
 
 def call_tool(name, arguments, timeout=TIMEOUT, url=None):
     """Call one tool of an MCP server (default the SD MCP) -> its result dict (raises on transport
-    errors)."""
+    errors, and when the MCP services are off)."""
+    if not ENABLED:
+        raise RuntimeError(DISABLED)
     url = url or EVAL_URL
     s = requests.Session()
     r = s.post(url, headers=HEADERS, timeout=10, json={
@@ -95,6 +102,8 @@ def evaluate(image, infotext, tag="eval", iqa=None):
     flags ...), or {"ok": False, "error": ...} when the MCP is not reachable or fails.
     iqa: learned quality models (None = only when IQA_MIN_RAM is free); without them the result has
     "iqa_skipped": True and its quality_score is adherence only (not comparable, see quality())."""
+    if not ENABLED:
+        return {"ok": False, "error": DISABLED}
     if iqa is None:
         iqa = available_ram() >= IQA_MIN_RAM
     try:

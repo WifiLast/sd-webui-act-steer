@@ -67,8 +67,7 @@ barely changes.*
 
 Train it in the accordion *Separation LoRA (train)*: choose the number of images and steps, press **Complex
 templates** for multi-subject prompts (or write your own with `{person}`, `{animal}`, `{thing}`, `{colour}`,
-`{pair}`, `{place}`), then **🎓 Train**. 48 images and 600 steps take about 9 minutes on an RX 7900 XTX (Anima,
-1024 px). Forge, SD 1.x / SDXL / Anima.
+`{pair}`, `{place}`), then **🎓 Train**. 48 images and 600 steps take about 9 minutes (Anima, 1024 px). Forge, SD 1.x / SDXL / Anima.
 
 It fixes clear merges well, but on prompts unlike its training prompts the effect is small: it moves attention
 apart, but it doesn't make the model draw an object it left out.
@@ -83,8 +82,9 @@ git clone https://github.com/WifiLast/sd-webui-act-steer
 Restart the webui; everything is in the *Activation Steering* section of txt2img / img2img.
 
 - **Models:** SD 1.x and SDXL get every feature. Anima (Forge) gets the word map and the Separation LoRA.
-- **Optional services:** image evaluation and rephrasing call an SD MCP and a rephrase service over HTTP
-  (`SD_ACT_STEER_EVAL_URL`, `SD_ACT_STEER_REPHRASE_URL`); without them those steps are skipped.
+- **MCP services (off by default):** image evaluation, rephrasing, ratings and the image history use external
+  MCP servers. They are disabled unless `SD_ACT_STEER_MCP=1` is set (addresses: `SD_ACT_STEER_EVAL_URL`,
+  `SD_ACT_STEER_REPHRASE_URL`); without them those steps are skipped.
 - **Optional speed-up:** a fused Triton kernel for the word maps (`ACT_STEER_TOKEN_MAPS_SRC`); otherwise plain torch is used.
 
 ## API
